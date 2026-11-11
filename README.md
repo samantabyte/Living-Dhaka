@@ -37,16 +37,19 @@ The Playwright config uses an installed Microsoft Edge browser on Windows. In a 
 - `Space`: handbrake
 - `C`: change camera
 - `M`: city map
+- `G`: route to the nearest fuel station (press again to return to the passenger route)
+- `E`: pay/refill at a fuel pump or repair at the garage
 - `R`: recover when nearly stationary
 - `F2`: toggle clear/rain weather
 - `Esc`: pause
 
 ## Features
 
-- Continuous Dhaka-inspired district with procedural windowed facades plus audited CC0 GLB landmarks, roadside props, vegetation and vehicles.
-- Rapier fixed-step collisions with a deterministic realistic acceleration/braking model, off-road traction, anti-stuck recovery, chase/cockpit cameras and quality presets.
+- Continuous Dhaka-inspired district with local CC0 2K asphalt, concrete and grass PBR materials, an urban HDR environment, audited GLB landmarks, roadside props, vegetation and vehicles.
+- Rapier fixed-step collisions for buildings, traffic, filling-station pumps and roadwork barriers, plus impact damage, deterministic acceleration/braking, off-road traction and anti-stuck recovery.
 - Complete ride offer, pickup, boarding, destination, scoring and reward loop.
-- Idempotent economy ledger, fuel, repairs, upgrades, XP and reputation.
+- Idempotent economy ledger, distance-based fuel use, paid station refills, collision damage, repairs, upgrades, XP and reputation.
+- Road-graph navigation, in-world directional arrows, live minimap, expanded full map and automatic low-fuel service detours that restore the passenger route after refilling.
 - Versioned IndexedDB saves with local backup.
 - English and Bangla locale data.
 - Day/night and monsoon rain systems, ambient traffic and signal-ready lane layout.

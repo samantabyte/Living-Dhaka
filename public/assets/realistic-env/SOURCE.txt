@@ -1,0 +1,12 @@
+CC0 environment assets retrieved 2026-11-12 from:
+https://github.com/petroulacl/fps-buildings-env-kit
+
+PBR materials (ambientCG, CC0):
+- Asphalt021 2K JPG: Color, NormalGL, Roughness
+- Concrete012 2K JPG: Color, NormalGL, Roughness
+- Grass004 2K JPG: Color, NormalGL, Roughness
+
+Environment lighting (Poly Haven, CC0):
+- urban_street_01_2k.hdr
+
+The assets are stored locally so the game performs no runtime third-party download.

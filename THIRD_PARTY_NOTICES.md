@@ -8,5 +8,6 @@ Living Dhaka includes open-source software installed through npm. Copyright and 
 - Zustand — MIT License — Copyright Paul Henschel and contributors.
 - Colyseus — MIT License — Copyright Endel Dreyer and contributors.
 - Low Poly City Kit — CC0 1.0 public-domain dedication — Kayquer and contributors — https://github.com/kayquer/kit-cidade-lowpoly
+- ambientCG PBR materials and Poly Haven HDRI, distributed through FPS Buildings Environment Kit — CC0 1.0 — https://github.com/petroulacl/fps-buildings-env-kit
 
-Selected Low Poly City Kit GLB models are distributed under CC0. No third-party audio asset is distributed.
+Selected city GLBs, PBR surface maps and the urban HDR environment are distributed under CC0. No third-party audio asset is distributed.

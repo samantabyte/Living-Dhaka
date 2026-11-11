@@ -12,6 +12,7 @@ export const locations: LocationNode[] = [
   { id: 'station', nameEn: 'Green Line Terminal', nameBn: 'গ্রিন লাইন টার্মিনাল', x: -215, z: 10, kind: 'pickup' },
   { id: 'hotel', nameEn: 'Meghna Hotel', nameBn: 'মেঘনা হোটেল', x: 105, z: 210, kind: 'pickup' },
   { id: 'fuel', nameEn: 'Padma Fuel', nameBn: 'পদ্মা ফুয়েল', x: -70, z: -205, kind: 'service' },
+  { id: 'fuel-east', nameEn: 'Meghna Filling Station', nameBn: 'মেঘনা ফিলিং স্টেশন', x: 225, z: 142, kind: 'service' },
   { id: 'garage', nameEn: 'Nagar Auto Care', nameBn: 'নগর অটো কেয়ার', x: 210, z: -75, kind: 'service' },
 ];
 

@@ -2,7 +2,7 @@ import { Server } from '@colyseus/core';
 import { WebSocketTransport } from '@colyseus/ws-transport';
 import { LivingDhakaRoom } from './LivingDhakaRoom.js';
 
-const port = Number(process.env.PORT ?? 2567);
+const port = Number(process.env.PORT ?? 2568);
 const gameServer = new Server({
   transport: new WebSocketTransport(),
   greet: false,

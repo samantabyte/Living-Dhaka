@@ -11,7 +11,7 @@ npm install
 npm run dev:all
 ```
 
-Open `http://localhost:5173`. The multiplayer server runs on port `2567`.
+Open `http://localhost:5175`. The multiplayer server runs on port `2568`.
 
 Production browser build:
 

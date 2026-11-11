@@ -4,7 +4,7 @@ export interface RemotePlayer { sessionId: string; name: string; x: number; z: n
 export interface MultiplayerSnapshot { serverTime: number; players: RemotePlayer[] }
 type Listener = (snapshot: MultiplayerSnapshot) => void;
 
-const endpoint = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.hostname}:2567`;
+const endpoint = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.hostname}:2568`;
 const client = new Client(endpoint);
 let room: Room | null = null;
 let snapshot: MultiplayerSnapshot = { serverTime: 0, players: [] };

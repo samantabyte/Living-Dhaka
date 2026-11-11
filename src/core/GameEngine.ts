@@ -4,6 +4,8 @@ import { useGameStore } from '../state/gameStore';
 import type { Quality, Vec2 } from '../types';
 import { locations, roadLoop, distance } from '../world/locations';
 import { sendPosition } from '../multiplayer/client';
+import { AssetLibrary } from '../assets/AssetLibrary';
+import { stepDriveSpeed } from '../vehicle/vehicleDynamics';
 
 interface TrafficCar { mesh: THREE.Group; segment: number; progress: number; speed: number; offset: number }
 
@@ -31,6 +33,10 @@ export class GameEngine {
   private previousSpeed = 0;
   private sun = new THREE.DirectionalLight(0xffefd1, 2.4);
   private clockMinutes = 8 * 60;
+  private assets = new AssetLibrary();
+  private driveSpeed = 0;
+  private steerInput = 0;
+  private stuckTime = 0;
 
   constructor(private canvas: HTMLCanvasElement) {
     this.quality = useGameStore.getState().career.settings.quality;
@@ -45,13 +51,13 @@ export class GameEngine {
   async start() {
     await RAPIER.init();
     this.world = new RAPIER.World({ x: 0, y: -9.81, z: 0 });
-    this.buildScene();
+    await this.buildScene();
     this.addListeners();
     this.resize();
     this.animate(performance.now());
   }
 
-  private buildScene() {
+  private async buildScene() {
     this.scene.background = new THREE.Color(0x9bc7d2);
     this.scene.fog = new THREE.Fog(0x9bc7d2, 180, 620);
     this.sun.position.set(-100, 180, 80);
@@ -63,18 +69,20 @@ export class GameEngine {
     const ground = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), new THREE.MeshStandardMaterial({ color: 0x4b6b48, roughness: 0.95 }));
     ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; this.scene.add(ground);
     this.world.createCollider(RAPIER.ColliderDesc.cuboid(450, 0.1, 450).setTranslation(0, -0.1, 0));
-    this.buildRoads(); this.buildCity(); this.buildCar(); this.buildMarker(); this.buildRain(); this.buildTraffic();
+    this.buildRoads(); this.buildCity(); await Promise.all([this.buildDetailedCity(), this.buildCar()]); this.buildMarker(); this.buildRain(); this.buildTraffic();
   }
 
   private road(x: number, z: number, width: number, length: number, rotation = 0) {
+    const sidewalk = new THREE.Mesh(new THREE.BoxGeometry(width + 5, 0.22, length + 5), new THREE.MeshStandardMaterial({ color: 0xaaa69b, roughness: 0.94 }));
+    sidewalk.position.set(x, 0.02, z); sidewalk.rotation.y = rotation; sidewalk.receiveShadow = true; this.scene.add(sidewalk);
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, 0.08, length), new THREE.MeshStandardMaterial({ color: 0x242a2c, roughness: 0.82, metalness: 0.05 }));
-    mesh.position.set(x, 0.04, z); mesh.rotation.y = rotation; mesh.receiveShadow = true; this.scene.add(mesh);
+    mesh.position.set(x, 0.16, z); mesh.rotation.y = rotation; mesh.receiveShadow = true; this.scene.add(mesh);
     const dashMat = new THREE.MeshBasicMaterial({ color: 0xe9d68a });
     const alongZ = length >= width;
     const count = Math.floor((alongZ ? length : width) / 16);
     for (let i = 0; i < count; i++) {
       const dash = new THREE.Mesh(new THREE.BoxGeometry(alongZ ? 0.35 : 6, 0.02, alongZ ? 6 : 0.35), dashMat);
-      dash.position.set(x + (alongZ ? 0 : -width / 2 + 8 + i * 16), 0.1, z + (alongZ ? -length / 2 + 8 + i * 16 : 0));
+      dash.position.set(x + (alongZ ? 0 : -width / 2 + 8 + i * 16), 0.23, z + (alongZ ? -length / 2 + 8 + i * 16 : 0));
       this.scene.add(dash);
     }
   }
@@ -89,12 +97,13 @@ export class GameEngine {
 
   private buildCity() {
     const colors = [0xd5b997, 0xc76e57, 0x7b9aa6, 0xe1d3ac, 0x879577, 0xa998b7];
-    const buildingMat = colors.map(color => new THREE.MeshStandardMaterial({ color, roughness: 0.82 }));
     for (let gx = -280; gx <= 280; gx += 32) for (let gz = -280; gz <= 280; gz += 32) {
       const nearRoad = Math.abs(gx) < 28 || Math.abs(gz) < 27 || Math.abs(gz + 190) < 22 || Math.abs(gz - 195) < 22 || Math.abs(gx + 225) < 22 || Math.abs(gx - 225) < 22;
       if (nearRoad || Math.random() < 0.12) continue;
       const h = 10 + Math.random() * (Math.abs(gx) < 170 && gz < 30 ? 52 : 24);
-      const mesh = new THREE.Mesh(new THREE.BoxGeometry(22 + Math.random() * 5, h, 22 + Math.random() * 5), buildingMat[Math.floor(Math.random() * buildingMat.length)]);
+      const facade = this.makeFacadeMaterial(colors[Math.floor(Math.random() * colors.length)], Math.ceil(h / 5));
+      const roof = new THREE.MeshStandardMaterial({ color: 0x3d4948, roughness: 0.9 });
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(22 + Math.random() * 5, h, 22 + Math.random() * 5), [facade, facade, roof, roof, facade, facade]);
       mesh.position.set(gx + (Math.random() - 0.5) * 5, h / 2, gz + (Math.random() - 0.5) * 5); mesh.castShadow = this.quality === 'high'; mesh.receiveShadow = true; this.scene.add(mesh);
       this.world.createCollider(RAPIER.ColliderDesc.cuboid(12, h / 2, 12).setTranslation(mesh.position.x, h / 2, mesh.position.z));
       if (Math.random() < 0.28) this.addSign(mesh.position.x, Math.min(h + 2, 14), mesh.position.z + 12.2, ['নগর', 'ঢাকা ক্যাফে', 'শাপলা', 'CITY MART'][Math.floor(Math.random() * 4)]);
@@ -106,6 +115,37 @@ export class GameEngine {
     }
     const water = new THREE.Mesh(new THREE.PlaneGeometry(80, 48), new THREE.MeshStandardMaterial({ color: 0x286f85, roughness: 0.28, metalness: 0.2 }));
     water.rotation.x = -Math.PI / 2; water.position.set(-160, 0.12, 145); this.scene.add(water);
+  }
+
+  private makeFacadeMaterial(color: number, floors: number) {
+    const canvas = document.createElement('canvas'); canvas.width = 128; canvas.height = 256;
+    const context = canvas.getContext('2d')!; context.fillStyle = `#${color.toString(16).padStart(6, '0')}`; context.fillRect(0, 0, canvas.width, canvas.height);
+    const rows = Math.max(2, Math.min(10, floors));
+    for (let row = 0; row < rows; row++) for (let column = 0; column < 3; column++) {
+      const lit = (row + column) % 4 === 0; context.fillStyle = lit ? '#d9c58a' : '#20343e';
+      context.fillRect(10 + column * 40, 12 + row * (232 / rows), 25, Math.max(8, 14 - rows * 0.25));
+    }
+    const texture = new THREE.CanvasTexture(canvas); texture.colorSpace = THREE.SRGBColorSpace;
+    return new THREE.MeshStandardMaterial({ color: 0xffffff, map: texture, roughness: 0.78, metalness: 0.04 });
+  }
+
+  private async buildDetailedCity() {
+    const placements = [
+      ['publicos-hospital.glb', 160, 135, 34, 0], ['publicos-universidade.glb', -145, -85, 38, Math.PI / 2],
+      ['comercial-shopping.glb', 135, -135, 36, -Math.PI / 2], ['comercial-hotel.glb', 105, 210, 30, Math.PI],
+      ['industrial-oficina.glb', 210, -75, 28, -Math.PI / 2], ['comercial-mercado.glb', -170, 45, 25, Math.PI / 2],
+      ['comercial-restaurante.glb', 70, 48, 24, Math.PI], ['comercial-loja_esquina.glb', -75, 70, 24, 0],
+      ['residencial-predio_alto.glb', 78, -80, 28, 0], ['residencial-predio_apartamentos.glb', -90, -145, 30, Math.PI],
+      ['publicos-escola.glb', -165, 120, 30, Math.PI / 2], ['residencial-casas_geminadas.glb', 175, 55, 28, -Math.PI / 2],
+    ] as const;
+    await Promise.all(placements.map(async ([name, x, z, size, rotation]) => {
+      const model = await this.assets.normalized(name, size); model.position.x += x; model.position.z += z; model.rotation.y += rotation; this.scene.add(model);
+    }));
+    const propPlacements: Array<[string, number, number, number]> = [];
+    for (let z = -240; z <= 240; z += 42) { propPlacements.push(['mobiliario-poste_luz.glb', -19, z, 7], ['mobiliario-poste_luz.glb', 19, z, 7]); }
+    for (let x = -245; x <= 245; x += 50) { propPlacements.push(['vegetacao-ipe_amarelo.glb', x, 35, 9], ['vegetacao-ipe_amarelo.glb', x, -35, 9]); }
+    propPlacements.push(['mobiliario-ponto_onibus.glb', 27, -112, 9], ['mobiliario-semaforo.glb', 20, 20, 7], ['mobiliario-banco_praca.glb', -150, 175, 6]);
+    await Promise.all(propPlacements.map(async ([name, x, z, size]) => { const model = await this.assets.normalized(name, size); model.position.x += x; model.position.z += z; this.scene.add(model); }));
   }
 
   private addSign(x: number, y: number, z: number, text: string) {
@@ -124,8 +164,10 @@ export class GameEngine {
     return group;
   }
 
-  private buildCar() {
-    this.carMesh = this.makeCar(0x13a89e); this.scene.add(this.carMesh);
+  private async buildCar() {
+    try { this.carMesh = await this.assets.normalized('veiculos-carro.glb', 4.6, true); }
+    catch (error) { console.warn('CC0 car model failed to load; using fallback.', error); this.carMesh = this.makeCar(0x13a89e); }
+    this.scene.add(this.carMesh);
     this.carBody = this.world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(0, 1.2, 35).setLinearDamping(0.7).setAngularDamping(4));
     this.carBody.setEnabledRotations(false, true, false, true);
     this.world.createCollider(RAPIER.ColliderDesc.cuboid(1.05, 0.55, 2.2).setFriction(1.15).setRestitution(0.05).setMass(1100), this.carBody);
@@ -173,22 +215,23 @@ export class GameEngine {
     const yaw = new THREE.Euler().setFromQuaternion(new THREE.Quaternion(rotation.x, rotation.y, rotation.z, rotation.w), 'YXZ').y;
     const forward = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
     const velocity = this.carBody.linvel();
-    const forwardSpeed = velocity.x * forward.x + velocity.z * forward.z;
     const throttle = this.keys.has('KeyW') || this.keys.has('ArrowUp') ? 1 : this.keys.has('KeyS') || this.keys.has('ArrowDown') ? -0.7 : 0;
     const steer = this.keys.has('KeyA') || this.keys.has('ArrowLeft') ? 1 : this.keys.has('KeyD') || this.keys.has('ArrowRight') ? -1 : 0;
     const fuelFactor = state.career.fuel > 0 ? 1 : 0;
     const rainGrip = state.weather === 'rain' ? 0.82 : 1;
-    const engine = 5400 * (1 + state.career.engineLevel * 0.15) * fuelFactor;
-    if (throttle) this.carBody.addForce({ x: forward.x * throttle * engine, y: 0, z: forward.z * throttle * engine }, true);
-    const steerStrength = Math.min(1, Math.abs(forwardSpeed) / 3) * 1550 * rainGrip;
-    if (steer && Math.abs(forwardSpeed) > 0.5) this.carBody.addTorque({ x: 0, y: steer * steerStrength * Math.sign(forwardSpeed), z: 0 }, true);
-    const lateral = new THREE.Vector3(velocity.x, 0, velocity.z).sub(forward.clone().multiplyScalar(forwardSpeed));
-    this.carBody.addForce({ x: -lateral.x * 2300 * rainGrip, y: 0, z: -lateral.z * 2300 * rainGrip }, true);
-    if (this.keys.has('Space')) this.carBody.addForce({ x: -velocity.x * 2600, y: 0, z: -velocity.z * 2600 }, true);
-    const maxSpeed = 29 + state.career.engineLevel * 3;
-    const planar = Math.hypot(velocity.x, velocity.z);
-    if (planar > maxSpeed) this.carBody.setLinvel({ x: velocity.x * maxSpeed / planar, y: velocity.y, z: velocity.z * maxSpeed / planar }, true);
+    const position = this.carBody.translation(); const onRoad = this.isOnRoad(position.x, position.z);
+    this.driveSpeed = stepDriveSpeed(this.driveSpeed, { throttle, handbrake: this.keys.has('Space'), dt, onRoad, engineLevel: state.career.engineLevel, brakeLevel: state.career.brakeLevel, hasFuel: fuelFactor > 0 });
+    this.steerInput = THREE.MathUtils.lerp(this.steerInput, steer, 1 - Math.pow(0.0002, dt));
+    const speedRatio = Math.min(1, Math.abs(this.driveSpeed) / 8);
+    const steeringRate = this.steerInput * (0.42 + speedRatio * 0.75) * Math.sign(this.driveSpeed || 1) * rainGrip;
+    const grip = onRoad ? rainGrip : 0.68;
+    const desiredX = forward.x * this.driveSpeed, desiredZ = forward.z * this.driveSpeed;
+    this.carBody.setLinvel({ x: THREE.MathUtils.lerp(velocity.x, desiredX, grip), y: velocity.y, z: THREE.MathUtils.lerp(velocity.z, desiredZ, grip) }, true);
+    this.carBody.setAngvel({ x: 0, y: steeringRate, z: 0 }, true);
     this.world.step();
+    const actual = this.carBody.linvel(); const planar = Math.hypot(actual.x, actual.z);
+    if (throttle > 0 && Math.abs(this.driveSpeed) > 2 && planar < Math.max(1.2, Math.abs(this.driveSpeed) * 0.22)) this.stuckTime += dt; else this.stuckTime = 0;
+    if (this.stuckTime > 2.2) { this.recoverToRoad(); this.stuckTime = 0; }
     this.metricTimer += dt;
     if (this.metricTimer >= 1) {
       const harsh = Math.abs(planar - this.previousSpeed) > 7 ? 1 : 0;
@@ -261,8 +304,23 @@ export class GameEngine {
   }
 
   private recover() {
-    if (!this.carBody || Math.hypot(this.carBody.linvel().x, this.carBody.linvel().z) > 4) return;
-    const p = this.carBody.translation(); this.carBody.setTranslation({ x: p.x, y: 1.5, z: p.z }, true); this.carBody.setRotation({ x: 0, y: 0, z: 0, w: 1 }, true); this.carBody.setLinvel({ x: 0, y: 0, z: 0 }, true); this.carBody.setAngvel({ x: 0, y: 0, z: 0 }, true);
+    if (!this.carBody || Math.hypot(this.carBody.linvel().x, this.carBody.linvel().z) > 5) return;
+    this.recoverToRoad();
+  }
+
+  private isOnRoad(x: number, z: number) {
+    return Math.abs(x) < 20 || Math.abs(z) < 19 || Math.abs(z + 190) < 16 || Math.abs(z - 195) < 16 || Math.abs(x + 225) < 16 || Math.abs(x - 225) < 16 || (Math.abs(z - 65) < 13 && x > 15 && x < 225) || (Math.abs(z + 80) < 13 && x > -225 && x < -35);
+  }
+
+  private recoverToRoad() {
+    const p = this.carBody.translation();
+    const candidates = [
+      { x: 0, z: THREE.MathUtils.clamp(p.z, -270, 270), yaw: 0 }, { x: THREE.MathUtils.clamp(p.x, -270, 270), z: 0, yaw: Math.PI / 2 },
+      { x: THREE.MathUtils.clamp(p.x, -250, 250), z: -190, yaw: Math.PI / 2 }, { x: THREE.MathUtils.clamp(p.x, -250, 250), z: 195, yaw: Math.PI / 2 },
+      { x: -225, z: THREE.MathUtils.clamp(p.z, -205, 205), yaw: 0 }, { x: 225, z: THREE.MathUtils.clamp(p.z, -205, 205), yaw: 0 },
+    ];
+    const nearest = candidates.sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0];
+    const half = nearest.yaw / 2; this.carBody.setTranslation({ x: nearest.x, y: 1.45, z: nearest.z }, true); this.carBody.setRotation({ x: 0, y: Math.sin(half), z: 0, w: Math.cos(half) }, true); this.carBody.setLinvel({ x: 0, y: 0, z: 0 }, true); this.carBody.setAngvel({ x: 0, y: 0, z: 0 }, true); this.driveSpeed = 0;
   }
 
   private resize() {

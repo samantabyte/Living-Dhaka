@@ -2,7 +2,13 @@
 
 Retrieval date: 2026-11-11.
 
-The current build uses no downloaded third-party art, models, textures, music or fonts. City geometry, vehicles, rain and interface artwork are generated from project code and CSS.
+The upgraded build combines project-generated geometry with selected CC0 GLB models from the Low Poly City Kit. The original CC0 license text is shipped beside the models at `public/assets/cc0-city/LICENSE-CC0.txt`.
+
+| Asset pack | Source | License | Files used |
+|---|---|---|---|
+| Low Poly City Kit | https://github.com/kayquer/kit-cidade-lowpoly | CC0 1.0 | Generic car, taxi, bus, hospital, university, school, hotel, shopping, office, market, restaurant, corner shop, garage, residential buildings, tree, shrubs, streetlight, traffic light, bus stop and bench GLBs |
+
+The CC0 models were copied without geometry modification, then normalized, scaled, shadow-enabled and placed at runtime by `AssetLibrary`.
 
 Runtime libraries:
 
@@ -14,4 +20,4 @@ Runtime libraries:
 | Zustand | https://github.com/pmndrs/zustand | MIT | UI state |
 | Colyseus | https://github.com/colyseus/colyseus | MIT | Multiplayer server |
 
-No OpenStreetMap data is included in this build.
+No OpenStreetMap data, trademarked vehicle, downloaded music or remote runtime asset is included in this build.

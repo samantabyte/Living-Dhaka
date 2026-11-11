@@ -43,8 +43,8 @@ The Playwright config uses an installed Microsoft Edge browser on Windows. In a 
 
 ## Features
 
-- Procedural continuous Dhaka-inspired district with arterial roads, neighborhoods, flyover, lake and service locations.
-- Rapier fixed-step vehicle physics, chase/cockpit cameras and quality presets.
+- Continuous Dhaka-inspired district with procedural windowed facades plus audited CC0 GLB landmarks, roadside props, vegetation and vehicles.
+- Rapier fixed-step collisions with a deterministic realistic acceleration/braking model, off-road traction, anti-stuck recovery, chase/cockpit cameras and quality presets.
 - Complete ride offer, pickup, boarding, destination, scoring and reward loop.
 - Idempotent economy ledger, fuel, repairs, upgrades, XP and reputation.
 - Versioned IndexedDB saves with local backup.

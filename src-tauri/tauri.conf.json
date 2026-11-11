@@ -1,0 +1,17 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Living Dhaka",
+  "version": "0.1.0",
+  "identifier": "com.livingdhaka.game",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devUrl": "http://localhost:5173",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [{ "title": "Living Dhaka", "width": 1440, "height": 900, "minWidth": 1024, "minHeight": 640, "fullscreen": false }],
+    "security": { "csp": null }
+  },
+  "bundle": { "active": true, "targets": "nsis", "icon": [] }
+}

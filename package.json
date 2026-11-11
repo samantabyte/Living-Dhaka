@@ -1,0 +1,52 @@
+{
+  "name": "living-dhaka",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "server": "tsx server/index.ts",
+    "dev:all": "concurrently -k -n GAME,SERVER -c cyan,magenta \"npm:dev\" \"npm:server\"",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "typecheck": "tsc -b --pretty false",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "check": "npm run typecheck && npm run lint && npm run test && npm run build"
+  },
+  "dependencies": {
+    "@dimforge/rapier3d-compat": "0.21.0",
+    "@vitejs/plugin-react": "5.1.1",
+    "@colyseus/core": "0.18.28",
+    "@colyseus/schema": "5.0.47",
+    "@colyseus/sdk": "0.18.10",
+    "@colyseus/ws-transport": "0.18.5",
+    "express": "5.1.0",
+    "nanoid": "5.1.16",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "three": "0.181.1",
+    "zustand": "5.0.8"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.1",
+    "@playwright/test": "1.56.1",
+    "@types/express": "5.0.5",
+    "@types/node": "24.10.1",
+    "@types/react": "19.2.5",
+    "@types/react-dom": "19.2.3",
+    "@types/three": "0.181.0",
+    "concurrently": "9.2.1",
+    "eslint": "9.39.1",
+    "eslint-plugin-react-hooks": "7.0.1",
+    "eslint-plugin-react-refresh": "0.4.24",
+    "globals": "16.5.0",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.47.0",
+    "vite": "7.3.8",
+    "vitest": "4.0.10"
+  }
+}

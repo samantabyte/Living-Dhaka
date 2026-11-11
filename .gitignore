@@ -1,0 +1,12 @@
+node_modules/
+dist/
+playwright-report/
+test-results/
+.playwright-browsers/
+screenshots/
+.env
+*.log
+.DS_Store
+.idea/
+.vscode/
+src-tauri/target/

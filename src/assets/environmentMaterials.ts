@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 
-const ROOT = '/assets/realistic-env/';
+const ROOT = `${import.meta.env.BASE_URL}assets/realistic-env/`;
 
 function configure(texture: THREE.Texture, repeat: number, color = false) {
   texture.wrapS = texture.wrapT = THREE.RepeatWrapping;

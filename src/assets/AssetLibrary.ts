@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-const ROOT = '/assets/cc0-city/';
+const ROOT = `${import.meta.env.BASE_URL}assets/cc0-city/`;
 
 export class AssetLibrary {
   private loader = new GLTFLoader();
